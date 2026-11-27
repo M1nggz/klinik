@@ -1,0 +1,118 @@
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  role ENUM('patient','doctor','admin') NOT NULL DEFAULT 'patient',
+  matric_no VARCHAR(30) NOT NULL UNIQUE,
+  username VARCHAR(80) NOT NULL,
+  email VARCHAR(190) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  phone VARCHAR(30) DEFAULT NULL,
+  specialty VARCHAR(100) DEFAULT NULL,
+  bio TEXT DEFAULT NULL,
+  status ENUM('active','disabled') NOT NULL DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS remember_tokens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  selector CHAR(18) NOT NULL UNIQUE,
+  validator_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS doctor_schedules (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  doctor_id INT NOT NULL,
+  weekday TINYINT NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  slot_minutes SMALLINT NOT NULL DEFAULT 30,
+  FOREIGN KEY (doctor_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS appointments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  doctor_id INT NOT NULL,
+  appt_date DATE NOT NULL,
+  appt_time TIME NOT NULL,
+  reason VARCHAR(255) DEFAULT NULL,
+  status ENUM('pending','confirmed','arrived','completed','rejected','cancelled','missed') NOT NULL DEFAULT 'pending',
+  token CHAR(32) NOT NULL,
+  reminder_sent TINYINT(1) NOT NULL DEFAULT 0,
+  late_sent TINYINT(1) NOT NULL DEFAULT 0,
+  followup_of INT DEFAULT NULL,
+  patient_seen TINYINT(1) NOT NULL DEFAULT 1,
+  doctor_seen TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_slot (doctor_id, appt_date, appt_time),
+  KEY idx_patient (patient_id),
+  FOREIGN KEY (patient_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (doctor_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS medical_records (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  doctor_id INT NOT NULL,
+  appointment_id INT DEFAULT NULL,
+  diagnosis VARCHAR(255) NOT NULL,
+  notes TEXT DEFAULT NULL,
+  patient_seen TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (doctor_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sender_id INT NOT NULL,
+  receiver_id INT NOT NULL,
+  body TEXT NOT NULL,
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_pair (sender_id, receiver_id),
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS activity_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT DEFAULT NULL,
+  action VARCHAR(50) NOT NULL,
+  details VARCHAR(500) DEFAULT NULL,
+  ip VARCHAR(45) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_action (action),
+  KEY idx_time (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sender_accounts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  display_name VARCHAR(100) NOT NULL,
+  email VARCHAR(190) NOT NULL UNIQUE,
+  app_password_enc TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS settings (
+  k VARCHAR(50) PRIMARY KEY,
+  v VARCHAR(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS ai_knowledge (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(120) NOT NULL,
+  questions TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  audience ENUM('all','patient','staff') NOT NULL DEFAULT 'all',
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS ai_unanswered (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  message VARCHAR(300) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
