@@ -13,7 +13,7 @@ define('ENC_KEY', 'ee010c5008f55d4e6679d536183e9622fcb5684ca792edac9782ab9c9a770
 
 // --- URL laman ---
 // XAMPP : BASE_PATH '/klinik'  | InfinityFree : BASE_PATH '' dan BASE_URL 'https://nama-anda.infinityfreeapp.com'
-define('BASE_PATH', '/klinik');
+define('BASE_PATH', '');
 define('BASE_URL',  'krwumskalproject.infinityfreeapp.com' . BASE_PATH);
 
 define('SITE_NAME', 'CompSciCorp');
